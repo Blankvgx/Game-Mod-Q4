@@ -72,6 +72,8 @@ void rvMonsterGrunt::Spawn ( void ) {
 	if ( spawnArgs.GetBool ( "preinject" ) ) {
 		RageStart ( );
 	}	
+
+	spawnArgs.Set("healthDropItem", "item_health_small");
 }
 
 /*
@@ -316,3 +318,18 @@ stateResult_t rvMonsterGrunt::State_Torso_LeapAttack ( const stateParms_t& parms
 	}
 	return SRESULT_ERROR;
 }
+/*
+void rvMonsterGrunt::OnDeath(void) {
+	// Spawn a health kit at the monster's location
+	const char* healthDropItem = spawnArgs.GetString("healthDropItem");
+	if (healthDropItem && *healthDropItem) {
+		idEntity* healthKit = gameLocal.SpawnEntityDef(healthDropItem);
+		if (healthKit) {
+			// Set the position of the health kit to the monster's position
+			healthKit->SetOrigin(GetPhysics()->GetOrigin());
+		}
+	}
+	RageStop();
+	idAI::OnDeath();
+}
+*/

@@ -73,6 +73,7 @@ public:
 	waterLevel_t			GetWaterLevel( void ) const;
 	int						GetWaterType( void ) const;
 	bool					HasJumped( void ) const;
+	bool					HasDoubleJumped(void) const;
 	bool					HasSteppedUp( void ) const;
 	float					GetStepUp( void ) const;
 	bool					IsCrouching( void ) const;
@@ -178,6 +179,7 @@ private:
 	void					CheckDuck( void );
 	void					CheckLadder( void );
 	bool					CheckJump( void );
+	bool					CheckDoubleJump(void);
 	bool					CheckWaterJump( void );
 	void					SetWaterLevel( void );
 	void					DropTimers( void );
