@@ -1151,8 +1151,8 @@ idPlayer::idPlayer() {
 	// squirrel: added DeadZone multiplayer mode
 	allowedToRespawn = true;
 	// squirrel: Mode-agnostic buymenus
-	inBuyZone = false;
-	inBuyZonePrev = false;
+	inBuyZone = true;
+	inBuyZonePrev = true;
 	// RITUAL END
 	spectating = false;
 	spectator = 0;
@@ -2006,6 +2006,10 @@ void idPlayer::Spawn(void) {
 		// RAVEN BEGIN
 		// mekberg: set to blaster now and disable the weapon.
 		idealWeapon = SlotForWeapon("weapon_blaster");
+		idealWeapon = SlotForWeapon("weapon_shotgun");
+		idealWeapon = SlotForWeapon("weapon_railgun");
+		idealWeapon = SlotForWeapon("weapon_nailgun");
+		idealWeapon = SlotForWeapon("weapon_rocketlauncher");
 		Event_DisableWeapon();
 		// RAVEN END
 	}
@@ -2032,6 +2036,10 @@ void idPlayer::Spawn(void) {
 	hardFallDelta = spawnArgs.GetFloat("hard_fall_delta", "45");
 	softFallDelta = spawnArgs.GetFloat("soft_fall_delta", "30");
 	noFallDelta = spawnArgs.GetFloat("no_fall_delta", "7");
+
+	// Sets minHealth for Rage
+	minHealth = spawnArgs.GetInt("minHealth", "25");
+	ragetime = spawnArgs.GetInt("ragetime", "10");
 
 	// precache decls
 	declManager->FindType(DECL_ENTITYDEF, "damage_fatalfall", false, false);
@@ -3439,6 +3447,19 @@ void idPlayer::UpdateHudStats(idUserInterface* _hud) {
 	int temp;
 
 	assert(_hud);
+	
+	if (ragetime > 0) 
+	{
+		_hud->SetStateString("ragetxt", "Rage Ready");
+	}else if(ragetime < 0)
+	{
+		_hud->SetStateString("ragetxt", "Rage Gone");
+	}
+
+	if (true)
+	{
+
+	}
 
 	temp = _hud->State().GetInt("player_health", "-1");
 	if (temp != health) {
@@ -8586,7 +8607,7 @@ bool idPlayer::CanBuy(void) {
 
 
 void idPlayer::GenerateImpulseForBuyAttempt(const char* itemName) {
-	if (!CanBuy())
+	if (CanBuy())
 		return;
 
 	int itemBuyImpulse = GetItemBuyImpulse(itemName);
@@ -9238,12 +9259,14 @@ void idPlayer::Move(void) {
 		pfl.onGround = (influenceActive == INFLUENCE_LEVEL2);
 		pfl.onLadder = false;
 		pfl.jump = false;
+		pfl.double_jumping = false;
 	}
 	else {
 		pfl.crouch = physicsObj.IsCrouching();
 		pfl.onGround = physicsObj.HasGroundContacts();
 		pfl.onLadder = physicsObj.OnLadder();
 		pfl.jump = physicsObj.HasJumped();
+		pfl.double_jumping = physicsObj.HasDoubleJumped();
 
 		// check if we're standing on top of a monster and give a push if we are
 		idEntity* groundEnt = physicsObj.GetGroundEntity();
@@ -9272,7 +9295,13 @@ void idPlayer::Move(void) {
 		acc->dir[2] = 200;
 		acc->dir[0] = acc->dir[1] = 0;
 	}
-
+	if (pfl.double_jumping) {
+		loggedAccel_t* acc = &loggedAccel[currentLoggedAccel & (NUM_LOGGED_ACCELS - 1)];
+		currentLoggedAccel++;
+		acc->time = gameLocal.time;
+		acc->dir[2] = 200;
+		acc->dir[0] = acc->dir[1] = 0;
+	}
 	if (pfl.onLadder) {
 		int old_rung = oldOrigin.z / LADDER_RUNG_DISTANCE;
 		int new_rung = physicsObj.GetOrigin().z / LADDER_RUNG_DISTANCE;
@@ -9864,6 +9893,19 @@ void idPlayer::Think(void) {
 		inBuyZone = false;
 
 	inBuyZonePrev = false;
+
+	if (health < 200)
+	{
+		if (health < minHealth)
+		{
+			ragetime--;
+			if (ragetime > 0)
+			{
+				health += 100;
+			}
+		}
+	}
+
 }
 
 /*
@@ -14399,5 +14441,7 @@ int idPlayer::CanSelectWeapon(const char* weaponName)
 
 	return weaponNum;
 }
+
+int minHealth;
 
 // RITUAL END

@@ -17,6 +17,10 @@ public:
 
 	rvAIMedic ( void );
 
+	idEntity* bossEnemy;
+	float bossDetectionRange;
+
+
 	void				InitSpawnArgsVariables			( void );
 	void				Spawn							( void );
 	void				Think							( void );

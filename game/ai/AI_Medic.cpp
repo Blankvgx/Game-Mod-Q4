@@ -6,7 +6,6 @@
 #include "AI_Util.h"
 #include "AI_Medic.h"
 
-
 const idEventDef AI_DisableHeal	( "disableHeal" );
 const idEventDef AI_EnableHeal	( "enableHeal" );
 const idEventDef AI_TakePatient ( "takePatient", "e" );
@@ -591,6 +590,8 @@ stateResult_t rvAIMedic::State_Medic ( const stateParms_t& parms ) {
 		STAGE_MOVE,			// Move towards the patient, speak & start anim
 		STAGE_PRE_HEAL_ANIM_WAIT,// Wait for pre heal anim to finish, then start the normal heal anim
 		STAGE_HEAL_START_WAIT,// Wait for start anim to finish
+		STAGE_CHECK_PROXIMITY,
+		STAGE_DISPLAY_GUI,
 		STAGE_HEAL,			// Keep healing until no longer in melee range or they're fully healed
 		STAGE_WAIT_FINISH	// Finish anim
 	};	
@@ -727,6 +728,19 @@ stateResult_t rvAIMedic::State_Medic ( const stateParms_t& parms ) {
 				return SRESULT_STAGE ( STAGE_HEAL );
 			}
 			return SRESULT_WAIT;
+
+		case STAGE_CHECK_PROXIMITY:
+			// Check if you are close to the medic
+			if (DistanceTo(patient) < 100) {
+				return SRESULT_STAGE(STAGE_DISPLAY_GUI);
+			}
+			break;
+
+		case STAGE_DISPLAY_GUI:
+			// Display the GUI on your screen
+			//DisplayMedicGUI();
+			return SRESULT_STAGE(STAGE_HEAL);
+			break;
 
 		case STAGE_HEAL:
 			{

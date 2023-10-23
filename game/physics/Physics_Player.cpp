@@ -2,11 +2,14 @@
 #pragma hdrstop
 
 #include "../Game_local.h"
+#include "../../mpgame/ai/AI_Move.h"
+#include "../../mpgame/ai/AI_Move.h"
 
-CLASS_DECLARATION( idPhysics_Actor, idPhysics_Player )
+CLASS_DECLARATION(idPhysics_Actor, idPhysics_Player)
 END_CLASS
 
 // movement parameters
+int can_double = 1;
 const float PM_STOPSPEED		= 100.0f;
 const float PM_SWIMSCALE		= 0.5f;
 const float PM_LADDERSPEED		= 100.0f;
@@ -35,6 +38,7 @@ const float OVERCLIP			= 1.001f;
 // movementFlags
 const int PMF_DUCKED			= 1;		// set when ducking
 const int PMF_JUMPED			= 2;		// set when the player jumped this frame
+const int PMF_DOUBLE_JUMPED		= 2;
 const int PMF_STEPPED_UP		= 4;		// set when the player stepped up this frame
 const int PMF_STEPPED_DOWN		= 8;		// set when the player stepped down this frame
 const int PMF_JUMP_HELD			= 16;		// set when jump button is held down
@@ -1297,6 +1301,17 @@ bool idPhysics_Player::CheckJump( void ) {
 	addVelocity *= idMath::Sqrt( addVelocity.Normalize() );
 	current.velocity += addVelocity;
 
+	if (command.upmove && can_double>0 && PMF_JUMPED) {
+		 // not holding jump
+		can_double -= 1;
+		groundPlane = false;		// jumping away
+		walking = false;
+		current.movementFlags = PMF_JUMPED;
+		addVelocity = 2.0f * maxJumpHeight * -gravityVector;
+		addVelocity *= idMath::Sqrt(addVelocity.Normalize());
+		current.velocity += addVelocity;
+	}
+
 // RAVEN BEGIN
 // bdube: crouch slide, nick maggoire is awesome
 	current.crouchSlideTime = 0;
@@ -1304,7 +1319,34 @@ bool idPhysics_Player::CheckJump( void ) {
 
 	return true;
 }
+/*
+=============
+idPhysics_Player::CheckDoubleJump
+=============
+*/
+bool idPhysics_Player::CheckDoubleJump(void) 
+{
+	idVec3 addVelocity;
+	if (can_double > 0 && command.upmove && !(current.movementFlags & PMF_DOUBLE_JUMPED)) 
+	{
+		// Perform double jump
+		can_double -= 1;
+		groundPlane = false;        // jumping away
+		walking = false;
+		current.movementFlags = PMF_DOUBLE_JUMPED;
 
+		// Calculate double jump velocity
+		addVelocity = 2.0f * maxJumpHeight * -gravityVector;
+		addVelocity *= idMath::Sqrt(addVelocity.Normalize());
+		current.velocity += addVelocity;
+
+		// Reset crouch slide time
+		current.crouchSlideTime = 0;
+
+		return true;
+	}
+	return false;
+}
 /*
 =============
 idPhysics_Player::CheckWaterJump
@@ -1350,6 +1392,9 @@ bool idPhysics_Player::CheckWaterJump( void ) {
 	current.velocity = 200.0f * viewForward - 350.0f * gravityNormal;
 	current.movementFlags |= PMF_TIME_WATERJUMP;
 	current.movementTime = 2000;
+	// addVelocity = 2.0f * maxJumpHeight * -gravityVector;
+	// addVelocity *= idMath::Sqrt(addVelocity.Normalize());
+	//current.velocity += addVelocity;
 
 	return true;
 }
@@ -1614,6 +1659,16 @@ idPhysics_Player::HasJumped
 bool idPhysics_Player::HasJumped( void ) const {
 	return ( ( current.movementFlags & PMF_JUMPED ) != 0 );
 }
+
+/*
+================
+idPhysics_Player::HasDoubleJumped
+================
+*/
+bool idPhysics_Player::HasDoubleJumped(void) const {
+	return ((current.movementFlags & PMF_DOUBLE_JUMPED) != 0);
+}
+
 
 /*
 ================

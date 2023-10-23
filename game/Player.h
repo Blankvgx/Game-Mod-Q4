@@ -195,6 +195,7 @@ const int	ASYNC_PLAYER_TOURNEY_STATUS_BITS = idMath::BitsForInteger( PTS_NUM_STA
 class idInventory {
 public:
 	int						maxHealth;
+	int						minHealth;
 	int						weapons;
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
@@ -280,6 +281,8 @@ public:
  		EVENT_MAXEVENTS
  	};
 
+	void StartBossBattle(idEntity* enemy);
+
 	friend class idThread;
 
 	usercmd_t				usercmd;
@@ -312,6 +315,7 @@ public:
 		bool		attackHeld		:1;
 		bool		weaponFired		:1;
 		bool		jump			:1;
+		bool		double_jumping  :1;
 		bool		crouch			:1;
 		bool		onGround		:1;
 		bool		onLadder		:1;
@@ -542,8 +546,6 @@ public:
 
 	// Secret Areas
 	void					DiscoverSecretArea			( const char *description);
-	
-	void					StartBossBattle				( idEntity* ent );
 
 	// Powerups
 	bool					GivePowerUp					( int powerup, int time, bool team = false );
@@ -1155,6 +1157,9 @@ private:
 	stateResult_t			State_Legs_Dead					( const stateParms_t& parms );
 	
  	CLASS_STATES_PROTOTYPE( idPlayer );
+
+	int minHealth;
+	int ragetime;
 };
 
 ID_INLINE bool idPlayer::IsBeingTalkedTo( void ) {
